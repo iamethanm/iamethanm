@@ -1,10 +1,16 @@
 package dogapi;
 
+import java.util.List;
+
 public final class BreedFetcherForLocalTesting implements BreedFetcher {
 
+    private int callCount = 0;
+
     @Override
-    public java.util.List<String> getSubBreeds(String breed)
+    public List<String> getSubBreeds(String breed)
             throws BreedFetcher.BreedNotFoundException {
+
+        callCount++;  // 记录每次被调用（测试会检查这个数）
 
         if (breed == null) {
             throw new BreedFetcher.BreedNotFoundException("null");
@@ -12,14 +18,18 @@ public final class BreedFetcherForLocalTesting implements BreedFetcher {
 
         switch (breed.toLowerCase()) {
             case "hound":
-                // 两个子品种 → MainTest 里期望 size = 2
-                return java.util.List.of("afghan", "basset");
+                // 有 2 个子品种，测试期望 getNumberOfSubBreeds("hound", mock) == 2
+                return List.of("afghan", "basset");
             case "poodle":
-                // 给几个随便的子品种，方便本地手动测
-                return java.util.List.of("miniature", "standard", "toy");
+                return List.of("miniature", "standard", "toy");
             default:
-                // 其余一律视为不存在 → 让 Main 返回 0
+                // 非法品种：抛异常（CachingBreedFetcher 不应缓存异常）
                 throw new BreedFetcher.BreedNotFoundException(breed);
         }
+    }
+
+    // 供测试断言调用次数
+    public int getCallCount() {
+        return callCount;
     }
 }
