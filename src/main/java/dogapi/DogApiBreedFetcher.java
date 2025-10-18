@@ -7,47 +7,37 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.*;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-/**
- * BreedFetcher implementation that relies on the dog.ceo API.
- * Note that all failures get reported as BreedNotFoundException
- * exceptions to align with the requirements of the BreedFetcher interface.
- */
-public class DogApiBreedFetcher implements BreedFetcher {
+public final class DogApiBreedFetcher implements BreedFetcher {
+    private static final String BASE = "https://dog.ceo/api/breed/";
     private final OkHttpClient client = new OkHttpClient();
 
-    /**
-     * Fetch the list of sub breeds for the given breed from the dog.ceo API.
-     *
-     * @param breed the breed to fetch sub breeds for
-     * @return list of sub breeds for the given breed
-     * @throws BreedNotFoundException if the breed does not exist (or if the API call fails for any reason)
-     */
     @Override
-    public List<String> getSubBreeds(String breed) throws BreedNotFoundException {
-        String url = "https://dog.ceo/api/breed/"
-                + URLEncoder.encode(breed, StandardCharsets.UTF_8) + "/list";
+    public List<String> getSubBreeds(String breed) throws BreedFetcher.BreedNotFoundException {
+        // 用全限定名避免 import 问题
+        String url = BASE
+                + java.net.URLEncoder.encode(breed, java.nio.charset.StandardCharsets.UTF_8)
+                + "/list";
 
         Request req = new Request.Builder().url(url).build();
         try (Response res = client.newCall(req).execute()) {
             if (!res.isSuccessful() || res.body() == null) {
-                throw new BreedNotFoundException(breed);
+                throw new BreedFetcher.BreedNotFoundException(breed);
             }
-            String body = res.body().string();
+            String body = Objects.requireNonNull(res.body()).string();
             JSONObject json = new JSONObject(body);
             if (!"success".equals(json.optString("status", ""))) {
-                // README 说明：不存在的品种会返回 {"status":"error", ...}。直接抛异常
-                throw new BreedNotFoundException(breed);
+                throw new BreedFetcher.BreedNotFoundException(breed);
             }
             JSONArray arr = json.getJSONArray("message");
             List<String> out = new ArrayList<>();
             for (int i = 0; i < arr.length(); i++) out.add(arr.getString(i));
             return out;
         } catch (IOException e) {
-            // 网络/IO问题按作业要求统一视为拉取失败 → 抛BreedNotFoundException也可
+            // 网络问题按作业约定不区分，统一视作取不到
             throw new RuntimeException(e);
         }
     }
