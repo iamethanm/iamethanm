@@ -33,9 +33,10 @@ public class Main {
      * @return the number of sub breeds. Zero should be returned if there are no sub breeds
      * returned by the fetcher
      */
-    public static int getNumberOfSubBreeds(String breed, BreedFetcher breedFetcher)
-            throws BreedFetcher.BreedNotFoundException {
-        List<String> subs = breedFetcher.getSubBreeds(breed);
-        return subs.size();  // 若没有子品种，size() 为 0，满足文档要求
+    public static int getNumberOfSubBreeds(String breed, BreedFetcher breedFetcher) {
+    try {
+        return breedFetcher.getSubBreeds(breed).size();
+    } catch (BreedFetcher.BreedNotFoundException e) {
+        return 0; // 无效品种时按测试预期返回 0
     }
 }
