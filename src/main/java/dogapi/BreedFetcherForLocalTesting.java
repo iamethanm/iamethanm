@@ -1,25 +1,25 @@
 package dogapi;
 
-import java.util.List;
-
-/**
- * A minimal implementation of the BreedFetcher interface for testing purposes.
- * To avoid excessive calls to the real API, we can primarily test with a local
- * implementation that demonstrates the basic functionality of the interface.
- */
-public class BreedFetcherForLocalTesting implements BreedFetcher {
-    private int callCount = 0;
+public final class BreedFetcherForLocalTesting implements BreedFetcher {
 
     @Override
-    public List<String> getSubBreeds(String breed) {
-        callCount++;
-        if ("hound".equalsIgnoreCase(breed)) {
-            return List.of("afghan", "basset");
-        }
-        throw new BreedNotFoundException(breed);
-    }
+    public java.util.List<String> getSubBreeds(String breed)
+            throws BreedFetcher.BreedNotFoundException {
 
-    public int getCallCount() {
-        return callCount;
+        if (breed == null) {
+            throw new BreedFetcher.BreedNotFoundException("null");
+        }
+
+        switch (breed.toLowerCase()) {
+            case "hound":
+                // 两个子品种 → MainTest 里期望 size = 2
+                return java.util.List.of("afghan", "basset");
+            case "poodle":
+                // 给几个随便的子品种，方便本地手动测
+                return java.util.List.of("miniature", "standard", "toy");
+            default:
+                // 其余一律视为不存在 → 让 Main 返回 0
+                throw new BreedFetcher.BreedNotFoundException(breed);
+        }
     }
 }
